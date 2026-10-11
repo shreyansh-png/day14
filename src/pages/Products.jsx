@@ -1,26 +1,32 @@
-import {Link} from "react-router-dom";
-
-export const products = [
-  { id: 1, name: "Keyboard", price: 1500 },
-  { id: 2, name: "Mouse", price: 600 },
-  { id: 3, name: "Monitor", price: 9000 },
-];
-
-import React from 'react'
+import { useEffect, useState } from "react";
+import ProductCard from "../components/ProductCard";
+import { axiosInstance } from "../config/axiosInstance";
 
 const Products = () => {
+  const [items, setItems] = useState([]);       // the product list
+  const [loading, setLoading] = useState(true); // still waiting for the API?
+
+  useEffect(() => {
+    const getProducts = async () => {
+      try {
+        const res = await axiosInstance.get("/products");
+        setItems(res.data);   // axios puts the response body in res.data
+      } catch (err) {
+        console.log("products failed", err); // the toast is already shown
+      } finally {
+        setLoading(false);    // runs on success AND on failure
+      }
+    };
+    getProducts();
+  }, []);                     // [] = run once, when the page first appears
+
+  // early return: show this INSTEAD of the grid while loading
+  if (loading) return <h2 className="p-4">Loading products...</h2>;
+
   return (
-   <div className="flex flex-col gap-3 p-4">
-    <h2  className="text-2xl font-bold"> Products</h2>
-   {/* map() turns each product into one Link */}
-      {products.map((p) => (
-        <Link
-          key={p.id}
-          to={`/products/${p.id}`}   // builds /products/1, /products/2 ...
-          className="border rounded p-3 hover:bg-gray-100"
-        >
-          {p.name} - Rs {p.price}
-        </Link>
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4">
+      {items.map((p) => (
+        <ProductCard key={p.id} product={p} />
       ))}
     </div>
   );
